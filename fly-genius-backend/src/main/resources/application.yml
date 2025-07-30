@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: fly-genius
+server:
+  port: 8100
+  servlet:
+    context-path: /api
+
+# ??
+springdoc:
+  api-docs:
+    enabled: true
+  group-configs:
+    - group: 'default'
+      paths-to-match:
+        - '/**'
+      packages-to-scan:
+        - com.flycode.flygenius.controller
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
