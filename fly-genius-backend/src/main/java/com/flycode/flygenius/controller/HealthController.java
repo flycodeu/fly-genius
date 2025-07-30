@@ -13,12 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RequestMapping("/health")
 @RestController
-@Tag(name = "测试接口")
 public class HealthController {
 
     @GetMapping("/test")
-    @Operation(summary = "测试接口是否正常响应数据")
-    public BaseResponse<String> testOk() {
+    @Operation(summary = "testHealthOk")
+    public BaseResponse<String> testHealthOk() {
         return ResultUtils.success("ok");
     }
 }
