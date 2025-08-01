@@ -34,3 +34,6 @@ build/
 mvnw
 mvnw.cmd
 .mvn/**
+logData/**
+logData/log/log_error.log
+logData/log/log_info.log
