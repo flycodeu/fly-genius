@@ -37,3 +37,5 @@ mvnw.cmd
 logData/**
 logData/log/log_error.log
 logData/log/log_info.log
+/src/main/resources/application-local.yml
+/tmp/**
