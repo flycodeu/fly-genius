@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author flycode
  */
+@Deprecated
 public class CodeFileSaver {
     //  保存文件的目录
     public static final String FILE_SAVE_DIR = System.getProperty("user.dir") + "/tmp/ai_code_result";
