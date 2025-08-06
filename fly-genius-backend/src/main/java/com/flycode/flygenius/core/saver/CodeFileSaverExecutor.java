@@ -12,10 +12,10 @@ public class CodeFileSaverExecutor {
     private static final HtmlCodeFileSaverTemplate htmlCodeFileSaverTemplate = new HtmlCodeFileSaverTemplate();
     private static final MultCodeFileSaverTemplate multCodeFileSaverTemplate = new MultCodeFileSaverTemplate();
 
-    public static File saveCode(CodeGenTypeEnum codeGenType, Object result) {
+    public static File saveCode(CodeGenTypeEnum codeGenType, Object result, long appId) {
         return switch (codeGenType) {
-            case HTML -> htmlCodeFileSaverTemplate.saveCode((HtmlCodeResult) result);
-            case MULTI_FILE -> multCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result);
+            case HTML -> htmlCodeFileSaverTemplate.saveCode((HtmlCodeResult) result, appId);
+            case MULTI_FILE -> multCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result, appId);
             default -> throw new IllegalArgumentException("Invalid code generation type: " + codeGenType);
         };
     }

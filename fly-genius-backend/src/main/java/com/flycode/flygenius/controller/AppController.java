@@ -1,6 +1,8 @@
 package com.flycode.flygenius.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.flycode.flygenius.annotation.AuthCheck;
 import com.flycode.flygenius.common.BaseResponse;
 import com.flycode.flygenius.common.DeleteRequest;
@@ -23,9 +25,15 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 应用 控制层。
@@ -237,5 +245,53 @@ public class AppController {
     public BaseResponse<AppVo> adminGetAppById(long id) {
         App app = appService.getById(id);
         return ResultUtils.success(appService.getAppVo(app));
+    }
+
+    /**
+     * 聊天生成代码
+     *
+     * @param message
+     * @param appId
+     * @param request
+     * @return
+     */
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatToCode(@RequestParam String message, @RequestParam long appId, HttpServletRequest request) {
+        // 1. 校验参数
+        ThrowUtils.throwIf(appId <= 0, ErrorCode.PARAMS_ERROR, "appId不存在");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "message不能为空");
+        // 2. 获取登录用户
+        User currentLoginUser = userService.getCurrentLoginUser(request);
+        // 3. 流式输出
+        Flux<String> chatToCodeStream = appService.chatToCode(appId, message, currentLoginUser);
+        Flux<ServerSentEvent<String>> serverSentEventFlux = chatToCodeStream
+                .map(chunk -> {
+                    Map<String, Object> data = Map.of("d", chunk);
+                    String jsonStr = JSONUtil.toJsonStr(data);
+                    return ServerSentEvent
+                            .<String>builder()
+                            .data(jsonStr)
+                            .build();
+                })
+                .concatWith(
+                        Mono.just(ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build()));
+        return serverSentEventFlux;
+    }
+
+
+    @GetMapping(value = "/chat/gen/code2", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatToCode2(@RequestParam String message, @RequestParam long appId, HttpServletRequest request) {
+        // 1. 校验参数
+        ThrowUtils.throwIf(appId <= 0, ErrorCode.PARAMS_ERROR, "appId不存在");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "message不能为空");
+        // 2. 获取登录用户
+        User currentLoginUser = userService.getCurrentLoginUser(request);
+        // 3. 流式输出
+        Flux<String> chatToCodeStream = appService.chatToCode(appId, message, currentLoginUser);
+
+        return chatToCodeStream;
     }
 }

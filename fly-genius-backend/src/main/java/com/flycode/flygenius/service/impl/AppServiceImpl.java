@@ -2,7 +2,9 @@ package com.flycode.flygenius.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.flycode.flygenius.ai.model.CodeGenTypeEnum;
+import com.flycode.flygenius.core.AiCodeGeneratorFacade;
 import com.flycode.flygenius.entity.constants.AppConstant;
 import com.flycode.flygenius.entity.constants.UserConstant;
 import com.flycode.flygenius.entity.model.App;
@@ -14,6 +16,7 @@ import com.flycode.flygenius.entity.vo.AppVo;
 import com.flycode.flygenius.entity.vo.UserVo;
 import com.flycode.flygenius.exception.BusinessException;
 import com.flycode.flygenius.exception.ErrorCode;
+import com.flycode.flygenius.exception.ThrowUtils;
 import com.flycode.flygenius.mapper.AppMapper;
 import com.flycode.flygenius.service.AppService;
 import com.flycode.flygenius.service.UserService;
@@ -23,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,6 +45,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
     @Override
     public long createApp(AppAddRequest appAddRequest, HttpServletRequest request) {
@@ -210,6 +216,31 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 .eq(App::getUserId, userId)
                 .like(App::getAppName, appName)
                 .orderBy(App::getCreateTime, false);
+    }
+
+    @Override
+    public Flux<String> chatToCode(long appId, String message, User loginUser) {
+        // 1. 参数校验
+        ThrowUtils.throwIf(appId <= 0, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR);
+        // 2.应用是否存在
+        App app = this.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "找不到对应的应用");
+        // 3. 校验权限
+        Long userId = loginUser.getId();
+        if (!userId.equals(app.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无访问权限");
+        }
+        // 4.获取类型
+        String codeGenType = app.getCodeGenType();
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
+        if (codeGenTypeEnum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不存在对应类型");
+        }
+        // 5.生成代码
+        Flux<String> saveFileStream = aiCodeGeneratorFacade.generatorAndSaveFileStream(message, codeGenTypeEnum, appId);
+
+        return saveFileStream;
     }
 
 }

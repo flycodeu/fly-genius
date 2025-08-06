@@ -1,5 +1,6 @@
 package com.flycode.flygenius.service;
 
+import com.flycode.flygenius.entity.model.User;
 import com.flycode.flygenius.entity.request.app.AppAddRequest;
 import com.flycode.flygenius.entity.request.app.AppQueryRequest;
 import com.flycode.flygenius.entity.request.app.AppUpdateRequest;
@@ -8,6 +9,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.flycode.flygenius.entity.model.App;
 import jakarta.servlet.http.HttpServletRequest;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -85,4 +87,13 @@ public interface AppService extends IService<App> {
      */
     QueryWrapper getUserAppQueryWrapper(AppQueryRequest queryRequest, Long userId);
 
+
+    /**
+     * AI聊天生成代码
+     * @param appId
+     * @param message
+     * @param loginUser
+     * @return
+     */
+    Flux<String> chatToCode(long appId,String message, User loginUser);
 }

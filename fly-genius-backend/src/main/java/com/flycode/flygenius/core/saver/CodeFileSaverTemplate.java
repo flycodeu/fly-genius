@@ -14,11 +14,11 @@ public abstract class CodeFileSaverTemplate<T> {
 
     protected static final String FILE_SAVE_DIR = System.getProperty("user.dir") + "/tmp/ai_code_result";
 
-    public final File saveCode(T result) {
+    public final File saveCode(T result, long appId) {
         // 验证输入参数
         validInput(result);
         // 生成文件地址目录
-        String baseDirPath = buildUniqueFileDir();
+        String baseDirPath = buildUniqueFileDir(appId);
         // 保存代码
         saveCode(result, baseDirPath);
         // 返回保存的目录
@@ -30,21 +30,23 @@ public abstract class CodeFileSaverTemplate<T> {
      *
      * @param input
      */
-    protected  void validInput(T input){
-        if (input == null){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"输入参数不能为空");
+    protected void validInput(T input) {
+        if (input == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "输入参数不能为空");
         }
-    } ;
+    }
+
+    ;
 
     /**
      * 根据生成类型生成文件唯一标识，使用雪花算法
      *
      * @return 返回目录
      */
-    protected  String buildUniqueFileDir() {
+    protected String buildUniqueFileDir(long appId) {
         // 从子类获取生成类型
         String codeType = getCodeGenType().getValue();
-        String uniqueDirName = StrUtil.format("{}_{}", codeType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDirName = StrUtil.format("{}_{}", codeType, appId);
         String dirPath = FILE_SAVE_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;

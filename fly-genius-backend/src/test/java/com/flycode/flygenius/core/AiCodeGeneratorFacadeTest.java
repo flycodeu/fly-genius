@@ -23,14 +23,14 @@ class AiCodeGeneratorFacadeTest {
     @Test
     public void testSaveFile() {
         String userMessage = "请生成个人博客";
-        File file = aiCodeGeneratorFacade.generatorAndSaveFile(userMessage, CodeGenTypeEnum.MULTI_FILE);
+        File file = aiCodeGeneratorFacade.generatorAndSaveFile(userMessage, CodeGenTypeEnum.MULTI_FILE,1);
         log.info("file: {}", file.getAbsolutePath());
     }
 
     @Test
     public void testSaveFileStream() {
         String userMessage = "请生成登录界面，代码简短，需要20行内";
-        Flux<String> fileStream = aiCodeGeneratorFacade.generatorAndSaveFileStream(userMessage, CodeGenTypeEnum.HTML);
+        Flux<String> fileStream = aiCodeGeneratorFacade.generatorAndSaveFileStream(userMessage, CodeGenTypeEnum.HTML,1);
         List<String> block = fileStream.collectList().block();
         log.info("fileStream: {}", block);
     }
