@@ -1,4 +1,4 @@
-package com.flycode.flygenius.entity.request;
+package com.flycode.flygenius.entity.request.user;
 
 import com.flycode.flygenius.common.PageRequest;
 import lombok.Data;

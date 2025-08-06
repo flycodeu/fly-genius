@@ -1,10 +1,8 @@
 package com.flycode.flygenius.service;
 
-import cn.hutool.http.server.HttpServerRequest;
-import cn.hutool.http.server.HttpServerResponse;
-import com.flycode.flygenius.entity.request.UserLoginRequest;
-import com.flycode.flygenius.entity.request.UserQueryRequest;
-import com.flycode.flygenius.entity.request.UserRegisterRequest;
+import com.flycode.flygenius.entity.request.user.UserLoginRequest;
+import com.flycode.flygenius.entity.request.user.UserQueryRequest;
+import com.flycode.flygenius.entity.request.user.UserRegisterRequest;
 import com.flycode.flygenius.entity.vo.LoginUserVo;
 import com.flycode.flygenius.entity.vo.UserVo;
 import com.mybatisflex.core.query.QueryWrapper;
