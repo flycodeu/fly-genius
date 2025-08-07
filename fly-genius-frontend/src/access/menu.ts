@@ -21,7 +21,7 @@ export function getMenuItemsFromRoutes() {
         // 隐藏菜单项
         if (route.meta?.hideInMenu) return false
         // 不展示登录、注册等页面
-        if (["/user/login", "/user/register", "/noAuth","/user/profile"].includes(String(route.path))) return false
+        if (["/user/login", "/user/register", "/noAuth","/user/profile","/app/edit","/app/chat"].includes(String(route.path))) return false
         // 权限校验
         const needAccess = route.meta?.access
         if (typeof needAccess === 'string' && !checkAccess(loginUser, needAccess)) return false

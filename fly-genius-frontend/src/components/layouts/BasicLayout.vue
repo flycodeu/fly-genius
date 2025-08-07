@@ -15,6 +15,8 @@ import GlobalFooter from './GlobalFooter.vue'
 
 const menuItems = ref([
   { key: 'home', label: '首页', route: '/' },
-  { key: 'userManage', label: '管理员', route: '/admin/userManage' },
+  { key: 'appList', label: '我的应用', route: '/app/list' },
+  { key: 'userManage', label: '用户管理', route: '/admin/userManage' },
+  { key: 'appManage', label: '应用管理', route: '/admin/appManage' },
 ])
 </script>
