@@ -9,10 +9,7 @@ import com.flycode.flygenius.common.DeleteRequest;
 import com.flycode.flygenius.common.ResultUtils;
 import com.flycode.flygenius.entity.constants.AppConstant;
 import com.flycode.flygenius.entity.constants.UserConstant;
-import com.flycode.flygenius.entity.request.app.AppAddRequest;
-import com.flycode.flygenius.entity.request.app.AppAdminUpdateRequest;
-import com.flycode.flygenius.entity.request.app.AppQueryRequest;
-import com.flycode.flygenius.entity.request.app.AppUpdateRequest;
+import com.flycode.flygenius.entity.request.app.*;
 import com.flycode.flygenius.entity.vo.AppVo;
 import com.flycode.flygenius.exception.BusinessException;
 import com.flycode.flygenius.exception.ErrorCode;
@@ -282,7 +279,8 @@ public class AppController {
     }
 
 
-    @GetMapping(value = "/chat/gen/code2", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Deprecated
+    @GetMapping(value = "/old/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chatToCode2(@RequestParam String message, @RequestParam long appId, HttpServletRequest request) {
         // 1. 校验参数
         ThrowUtils.throwIf(appId <= 0, ErrorCode.PARAMS_ERROR, "appId不存在");
@@ -294,4 +292,25 @@ public class AppController {
 
         return chatToCodeStream;
     }
+
+
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getCurrentLoginUser(request);
+        // 调用服务部署应用
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
+    }
+
 }

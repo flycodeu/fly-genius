@@ -23,7 +23,7 @@ public interface AppService extends IService<App> {
      * 创建应用
      *
      * @param appAddRequest 应用创建请求
-     * @param request      请求对象
+     * @param request       请求对象
      * @return 创建成功应用id
      */
     long createApp(AppAddRequest appAddRequest, HttpServletRequest request);
@@ -32,7 +32,7 @@ public interface AppService extends IService<App> {
      * 更新应用
      *
      * @param appUpdateRequest 应用更新请求
-     * @param request         请求对象
+     * @param request          请求对象
      * @return 更新是否成功
      */
     boolean updateApp(AppUpdateRequest appUpdateRequest, HttpServletRequest request);
@@ -90,10 +90,20 @@ public interface AppService extends IService<App> {
 
     /**
      * AI聊天生成代码
+     *
      * @param appId
      * @param message
      * @param loginUser
      * @return
      */
-    Flux<String> chatToCode(long appId,String message, User loginUser);
+    Flux<String> chatToCode(long appId, String message, User loginUser);
+
+    /**
+     * 应用部署
+     *
+     * @param appId 应用id
+     * @param loginUser 登录用户
+     * @return
+     */
+    String deployApp(Long appId, User loginUser);
 }

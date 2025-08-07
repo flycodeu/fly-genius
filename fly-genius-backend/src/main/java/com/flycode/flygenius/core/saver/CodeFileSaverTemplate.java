@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.flycode.flygenius.ai.model.CodeGenTypeEnum;
+import com.flycode.flygenius.entity.constants.AppConstant;
 import com.flycode.flygenius.exception.BusinessException;
 import com.flycode.flygenius.exception.ErrorCode;
 
@@ -12,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 public abstract class CodeFileSaverTemplate<T> {
 
-    protected static final String FILE_SAVE_DIR = System.getProperty("user.dir") + "/tmp/ai_code_result";
+    protected static final String FILE_SAVE_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
     public final File saveCode(T result, long appId) {
         // 验证输入参数

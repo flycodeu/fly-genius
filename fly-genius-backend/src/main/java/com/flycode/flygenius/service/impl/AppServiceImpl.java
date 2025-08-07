@@ -1,7 +1,9 @@
 package com.flycode.flygenius.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.flycode.flygenius.ai.model.CodeGenTypeEnum;
 import com.flycode.flygenius.core.AiCodeGeneratorFacade;
@@ -28,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -241,6 +244,54 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         Flux<String> saveFileStream = aiCodeGeneratorFacade.generatorAndSaveFileStream(message, codeGenTypeEnum, appId);
 
         return saveFileStream;
+    }
+
+    @Override
+    public String deployApp(Long appId, User loginUser) {
+        // 1. 参数校验
+        ThrowUtils.throwIf(appId <= 0, ErrorCode.PARAMS_ERROR, "appId不存在");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        // 2. 应用是否存在
+        App app = this.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        // 3. 用户校验是否是本人
+        Long userId = app.getUserId();
+        ThrowUtils.throwIf(!userId.equals(loginUser.getId()), ErrorCode.NO_AUTH_ERROR, "无访问权限");
+
+        // 4. 判断是否有deployKey
+        String deployKey = app.getDeployKey();
+        if (deployKey == null) {
+            // 5. 没有就生成6位随机的deployKey
+            deployKey = RandomUtil.randomString(6);
+        }
+
+        // 6. 获取代码类型，拼接文件生成路径
+        String codeGenType = app.getCodeGenType();
+        String sourceDirName = codeGenType + "_" + appId;
+        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
+
+        // 7. 判断路径是否存在、文件是否存在
+        File sourceDir = new File(sourceDirPath);
+        if (!sourceDir.exists() || !sourceDir.isDirectory()) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "代码生成目录不存在");
+        }
+
+        // 8. 将生成的代码复制到部署目录路径下面
+        String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
+        try {
+            FileUtil.copyContent(sourceDir, new File(deployDirPath), true);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "代码生成目录不存在");
+        }
+        // 9. 修改部署时间
+        app.setDeployedTime(LocalDateTime.now());
+        app.setDeployKey(deployKey);
+        app.setId(appId);
+        boolean b = this.updateById(app);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "修改应用部署信息失败");
+
+        // 10. 返回访问地址
+        return String.format("%s/%s/",AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 
 }
