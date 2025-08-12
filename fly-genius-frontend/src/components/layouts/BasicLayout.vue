@@ -1,7 +1,7 @@
 <template>
-  <a-layout style="min-height: 100vh; background: #f5f5f5;">
-    <GlobalHeader :menu-items="menuItems" style="padding: 0 16px;" />
-    <a-layout-content style="margin:0 0 0;overflow:initial;padding:0 16px; background: #fff;">
+  <a-layout class="basic-layout">
+    <GlobalHeader :menu-items="menuItems" />
+    <a-layout-content class="main-content">
       <router-view />
     </a-layout-content>
     <GlobalFooter style="padding: 0 16px;" />
@@ -20,3 +20,15 @@ const menuItems = ref([
   { key: 'appManage', label: '应用管理', route: '/admin/appManage' },
 ])
 </script>
+
+<style scoped>
+.basic-layout {
+  background: none;
+}
+.main-content {
+  width: 100%;
+  padding: 0;
+  background: none;
+  margin: 0;
+}
+</style>
