@@ -9,6 +9,7 @@ import com.flycode.flygenius.ai.model.CodeGenTypeEnum;
 import com.flycode.flygenius.core.AiCodeGeneratorFacade;
 import com.flycode.flygenius.entity.constants.AppConstant;
 import com.flycode.flygenius.entity.constants.UserConstant;
+import com.flycode.flygenius.entity.enums.ChatHistoryMessageTypeEnum;
 import com.flycode.flygenius.entity.model.App;
 import com.flycode.flygenius.entity.model.User;
 import com.flycode.flygenius.entity.request.app.AppAddRequest;
@@ -50,6 +51,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private UserService userService;
     @Autowired
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
+    @Autowired
+    private ChatHistoryServiceImpl chatHistoryService;
 
     @Override
     public long createApp(AppAddRequest appAddRequest, HttpServletRequest request) {
@@ -240,8 +243,27 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "不存在对应类型");
         }
+
+        // 添加用户消息到历史数据库
+        chatHistoryService.addChatHistory(appId, message, userId, ChatHistoryMessageTypeEnum.USER.getValue());
+
         // 5.生成代码
         Flux<String> saveFileStream = aiCodeGeneratorFacade.generatorAndSaveFileStream(message, codeGenTypeEnum, appId);
+
+
+        // 6. 插入历史数据库
+        StringBuilder aiCode = new StringBuilder();
+        saveFileStream.map(chunk -> {
+            aiCode.append(chunk);
+            return chunk;
+        }).doOnComplete(() -> {
+            String aiResponse = aiCode.toString();
+            chatHistoryService.addChatHistory(appId, aiResponse, userId, ChatHistoryMessageTypeEnum.AI.getValue());
+        }).doOnError((error) -> {
+            String errorMessage = "AI回复消息失败：" + error.getMessage();
+            chatHistoryService.addChatHistory(appId, errorMessage, userId, ChatHistoryMessageTypeEnum.AI.getValue());
+        });
+
 
         return saveFileStream;
     }
@@ -291,7 +313,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "修改应用部署信息失败");
 
         // 10. 返回访问地址
-        return String.format("%s/%s/",AppConstant.CODE_DEPLOY_HOST, deployKey);
+        return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 
 }
