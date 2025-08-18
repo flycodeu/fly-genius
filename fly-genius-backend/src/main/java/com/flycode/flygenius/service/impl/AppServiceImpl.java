@@ -26,6 +26,7 @@ import com.flycode.flygenius.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  *
  * @author flycode
  */
+@Slf4j
 @Service
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
 
@@ -133,6 +135,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 判断权限：只有管理员或应用创建者可以删除
         if (!UserConstant.ADMIN_ROLE.equals(currentUser.getUserRole()) && !app.getUserId().equals(currentUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除此应用");
+        }
+
+        // 删除关联消息
+        boolean b = chatHistoryService.deleteChatHistoryByAppId(app.getId());
+        if (!b) {
+            log.error("应用{}删除关联消息失败", app.getId());
         }
 
         return this.removeById(id);
@@ -253,7 +261,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         // 6. 插入历史数据库
         StringBuilder aiCode = new StringBuilder();
-        saveFileStream.map(chunk -> {
+        return saveFileStream.map(chunk -> {
             aiCode.append(chunk);
             return chunk;
         }).doOnComplete(() -> {
@@ -264,8 +272,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             chatHistoryService.addChatHistory(appId, errorMessage, userId, ChatHistoryMessageTypeEnum.AI.getValue());
         });
 
-
-        return saveFileStream;
     }
 
     @Override
