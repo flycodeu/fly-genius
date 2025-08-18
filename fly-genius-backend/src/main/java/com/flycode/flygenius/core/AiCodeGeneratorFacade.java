@@ -1,6 +1,7 @@
 package com.flycode.flygenius.core;
 
 import com.flycode.flygenius.ai.AiCodeGenerateService;
+import com.flycode.flygenius.ai.AiCodeGeneratorServiceFactory;
 import com.flycode.flygenius.ai.model.CodeGenTypeEnum;
 import com.flycode.flygenius.ai.model.HtmlCodeResult;
 import com.flycode.flygenius.ai.model.MultiFileCodeResult;
@@ -23,8 +24,10 @@ import java.io.File;
 @Service
 @Slf4j
 public class AiCodeGeneratorFacade {
+   // @Resource
+   // private AiCodeGenerateService aiCodeGenerateService;
     @Resource
-    private AiCodeGenerateService aiCodeGenerateService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 生成代码，并保存到本地
@@ -37,6 +40,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenType) {
             case HTML -> {
                 HtmlCodeResult generateHtmlCode = aiCodeGenerateService.generateHtmlCode(userMessage);
@@ -58,18 +62,19 @@ public class AiCodeGeneratorFacade {
      * @param codeGenType
      * @return
      */
-    public Flux<String> generatorAndSaveFileStream(String userMessage, CodeGenTypeEnum codeGenType,long appId) {
+    public Flux<String> generatorAndSaveFileStream(String userMessage, CodeGenTypeEnum codeGenType, long appId) {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenType) {
             case HTML -> {
                 Flux<String> htmlCodeStream = aiCodeGenerateService.generateMutlHtmlCodeStream(userMessage);
-                yield processCodeStream(htmlCodeStream, CodeGenTypeEnum.HTML,appId);
+                yield processCodeStream(htmlCodeStream, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
                 Flux<String> mutlHtmlCodeStream = aiCodeGenerateService.generateMutlHtmlCodeStream(userMessage);
-                yield processCodeStream(mutlHtmlCodeStream, CodeGenTypeEnum.MULTI_FILE,appId);
+                yield processCodeStream(mutlHtmlCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的类型");
         };
@@ -80,7 +85,7 @@ public class AiCodeGeneratorFacade {
      * @param codeGenType
      * @return
      */
-    public Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenType,long appId) {
+    public Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenType, long appId) {
         StringBuilder codeBuilder = new StringBuilder();
         return codeStream.doOnNext(chunk -> {
             codeBuilder.append(chunk);
@@ -89,7 +94,7 @@ public class AiCodeGeneratorFacade {
                 String completeCode = codeBuilder.toString();
                 // 执行器保存代码
                 Object parserObj = CoreParserExecutor.parserObj(completeCode, codeGenType);
-                File saveDir = CodeFileSaverExecutor.saveCode(codeGenType, parserObj,appId);
+                File saveDir = CodeFileSaverExecutor.saveCode(codeGenType, parserObj, appId);
                 log.info("文件保存路径:{}", saveDir);
             } catch (Exception e) {
                 log.error("生成代码失败", e);

@@ -6,6 +6,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.flycode.flygenius.entity.model.ChatHistory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -54,4 +55,6 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return
      */
     Page<ChatHistory> listChatHistoryByPage(Long appId, int pageSize, int pageNum, LocalDateTime lastCreateTime, User loginUser);
+
+    int loadChatHistoryFromMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 }

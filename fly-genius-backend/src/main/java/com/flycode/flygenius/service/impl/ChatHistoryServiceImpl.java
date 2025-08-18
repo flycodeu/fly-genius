@@ -15,11 +15,15 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.flycode.flygenius.entity.model.ChatHistory;
 import com.flycode.flygenius.mapper.ChatHistoryMapper;
 import com.flycode.flygenius.service.ChatHistoryService;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 对话历史 服务层实现。
@@ -111,5 +115,34 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         chatHistoryRequest.setLastCreateTime(lastCreateTime);
         QueryWrapper queryWrapper = getQueryWrapper(chatHistoryRequest);
         return this.page(new Page<>(pageNum, pageSize), queryWrapper);
+    }
+
+    @Override
+    public int loadChatHistoryFromMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
+        // 1. 查询对话历史记录，最新的20条记录
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("appId", appId);
+        queryWrapper.orderBy(ChatHistory::getCreateTime, false);
+        queryWrapper.limit(1, 20);
+        List<ChatHistory> chatHistoryList = this.list(queryWrapper);
+        if (chatHistoryList.isEmpty()) {
+            return 0;
+        }
+        // 2. 历史记录加载到内存，将历史记录倒序，按照时间正序
+        chatHistoryList = chatHistoryList.reversed();
+        int count = 0;
+        // 3. 将历史数据都删除
+        chatMemory.clear();
+        // 4. 遍历AI、USER数据记录，插入本地缓存
+        for (ChatHistory chatHistory : chatHistoryList) {
+            if (ChatHistoryMessageTypeEnum.AI.getValue().equals(chatHistory.getMessageType())) {
+                chatMemory.add(UserMessage.from(chatHistory.getMessage()));
+            } else if (ChatHistoryMessageTypeEnum.USER.getValue().equals(chatHistory.getMessageType())) {
+                chatMemory.add(AiMessage.from(chatHistory.getMessage()));
+            }
+            count++;
+        }
+        // 5. 返回记录数
+        return count;
     }
 }
