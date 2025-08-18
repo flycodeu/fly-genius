@@ -127,6 +127,13 @@ const viewApp = (appId: number | undefined) => {
   }
 }
 
+// 编辑应用
+const editApp = (appId: number | undefined) => {
+  if (appId) {
+    router.push(`/app/chat/${appId}`)
+  }
+}
+
 // 格式化时间
 const formatTime = (time: string | undefined) => {
   if (!time) return ''
@@ -185,11 +192,14 @@ onMounted(() => {
     <div class="section">
       <h2 class="section-title">我的作品</h2>
       <div class="app-grid">
-        <div v-for="app in myApps" :key="app.id" class="app-card">
+        <div v-for="app in myApps" :key="app.id" class="app-card" @click="editApp(app.id)">
           <div class="app-preview">
             <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
             <div v-else class="app-placeholder">
               <span>🤖</span>
+            </div>
+            <div class="app-overlay">
+              <a-button type="primary" @click.stop="editApp(app.id)">查看对话</a-button>
             </div>
           </div>
           <div class="app-info">
@@ -221,7 +231,10 @@ onMounted(() => {
               <span>🤖</span>
             </div>
             <div class="featured-overlay">
-              <a-button type="primary" @click="viewApp(app.id)">查看详情</a-button>
+              <a-space>
+                <a-button type="primary" @click="viewApp(app.id)">查看详情</a-button>
+                <a-button type="default" @click="editApp(app.id)">进入对话</a-button>
+              </a-space>
             </div>
           </div>
           <div class="featured-info">
