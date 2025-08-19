@@ -24,8 +24,8 @@ import java.io.File;
 @Service
 @Slf4j
 public class AiCodeGeneratorFacade {
-   // @Resource
-   // private AiCodeGenerateService aiCodeGenerateService;
+    // @Resource
+    // private AiCodeGenerateService aiCodeGenerateService;
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
@@ -40,7 +40,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenType);
         return switch (codeGenType) {
             case HTML -> {
                 HtmlCodeResult generateHtmlCode = aiCodeGenerateService.generateHtmlCode(userMessage);
@@ -66,7 +66,8 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        // 创建服务，传入appId和代码类型
+        AiCodeGenerateService aiCodeGenerateService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenType);
         return switch (codeGenType) {
             case HTML -> {
                 Flux<String> htmlCodeStream = aiCodeGenerateService.generateMutlHtmlCodeStream(userMessage);
@@ -75,6 +76,10 @@ public class AiCodeGeneratorFacade {
             case MULTI_FILE -> {
                 Flux<String> mutlHtmlCodeStream = aiCodeGenerateService.generateMutlHtmlCodeStream(userMessage);
                 yield processCodeStream(mutlHtmlCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+            }
+            case VUE_PROJECT -> {
+                Flux<String> vueProjectCodeStream = aiCodeGenerateService.generateVueProjectCodeStream(appId, userMessage);
+                yield processCodeStream(vueProjectCodeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的类型");
         };
